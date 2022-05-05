@@ -1,0 +1,74 @@
+*&---------------------------------------------------------------------*
+*& Report ZVA016AUFGABENBLATT5AUFGABE1
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZVA016AUFGABENBLATT5AUFGABE1.
+
+*Ersrellen Sie den Bericht “Umsatz pro Kunde” mit den folgenden Anforderungen
+
+*Input Jahr der Bestellung
+parameters jahr type n length 4.
+*Input fuer Kundenkategorie
+parameters kundkat type ZVA016KUNDE-KUNDENKATEGORIE value check.
+
+data:   itab_Kunde type table of zva016Kunde,
+        itab_Verkauf type table of zva016Verkauf,
+        wa_Verkauf type zva016Verkauf,
+        wa_Kunde type zva016Kunde,
+        umsatzKunde type p value 0,
+        currentKunde type n.
+
+
+write: / 'Gewählte Selektionen: ',
+       / 'Jahr der Bestellung: ', jahr,
+       / 'Kundenkategorie: ', kundkat.
+
+uline.
+
+*Beiden Selektionskriterien soll entweder ein Jahr oder nichts eingegeben werden können. Wenn nichts eingegeben wurde, gibt es für das Jahr keine Einschränkung.
+select * from zva016Verkauf into table itab_Verkauf.
+
+* Bei der Kundenkategorie soll entweder eine Kundennategorie oder nichts eingegeben werden können.
+if kundkat <> ''.
+
+    select * from zva016Kunde into table itab_Kunde where kundenkategorie = kundkat.
+
+elseif kundkat = '' .
+
+    select * from zva016Kunde into table itab_Kunde.
+
+endif.
+
+
+loop at itab_Kunde into wa_Kunde.
+
+    loop at itab_Verkauf into wa_Verkauf.
+
+        if wa_kunde-knr = wa_verkauf-kundennummer.
+
+            if wa_Verkauf-verkaufsdatum(4) = jahr or jahr = '0000'.
+
+                umsatzKunde = umsatzKunde + wa_verkauf-verkaufspreis.
+
+            endif.
+
+        endif.
+
+    endloop.
+
+* DerKunde/dieKundin soll nicht ausgegeben werden, wenn er/sie keinen Umsatz unter Beachtung der Selektionskriterien generiert hat.
+
+    if umsatzKunde <> 0.
+
+        write: / wa_kunde-knr, wa_kunde-nachname, wa_kunde-vorname, umsatzKunde, wa_Verkauf-waehrung.
+
+    endif.
+
+    umsatzKunde = 0.
+
+endloop.
+
+uline.
+write: /'Reportstart: ', sy-datum, sy-uzeit left-justified,
+       'Nutzer: ', sy-uname right-justified.
