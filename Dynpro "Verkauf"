@@ -1,0 +1,126 @@
+*----------------------------------------------------------------------*
+***INCLUDE MZVA016_BEWEGUNGSDATEN_USERI02.
+*----------------------------------------------------------------------*
+*&---------------------------------------------------------------------*
+*&      Module  USER_COMMAND_0171  INPUT
+*&---------------------------------------------------------------------*
+*       text
+*----------------------------------------------------------------------*
+MODULE USER_COMMAND_0171 INPUT.
+
+
+TABLES zva016VERKAUF.
+
+
+data: old_menge type i VALUE IS INITIAL,
+      new_menge type i VALUE IS INITIAL,
+      diff type i VALUE IS INITIAL.
+
+  save_ok = ok_code.
+  clear ok_code.
+
+  case save_ok.
+
+    when 'BACK'.
+      SET SCREEN 170.
+
+    when 'EXIT'.
+      SET SCREEN 170.
+
+    WHEN 'DELETE'.
+      if zva016VERKAUF-verkaufsnummer is not initial.
+
+        DELETE FROM zva016VERKAUF where verkaufsnummer =  zva016VERKAUF-verkaufsnummer.
+
+      ENDIF.
+      MESSAGE 'Datensatz werde erfolgreich geloescht' TYPE 'S'.
+      clear wa_verkauf.
+
+          zva016VERKAUF-kundennummer = ''.
+          zva016VERKAUF-artikelnummer = ''.
+          zva016VERKAUF-menge = ''.
+          zva016VERKAUF-verkaufspreis = ''.
+          zva016VERKAUF-waehrung = ''.
+          zva016VERKAUF-verkaufsdatum = ''.
+
+    WHEN 'CHANGE'.
+
+      if zva016VERKAUF-verkaufsnummer is not initial.
+        select * from zva016VERKAUF into wa_verkauf where verkaufsnummer =  zva016VERKAUF-verkaufsnummer.
+
+         old_menge = wa_verkauf-menge.
+
+         wa_verkauf-kundennummer = zva016VERKAUF-kundennummer.
+         wa_verkauf-artikelnummer = zva016VERKAUF-artikelnummer.
+         wa_verkauf-menge = zva016VERKAUF-menge.
+         wa_verkauf-verkaufspreis = zva016VERKAUF-verkaufspreis.
+         wa_verkauf-waehrung = zva016VERKAUF-waehrung.
+         wa_verkauf-verkaufsdatum = zva016VERKAUF-verkaufsdatum.
+
+        new_menge = wa_verkauf-menge.
+
+        diff = new_menge - old_menge.
+
+        if diff <> 0.
+
+            select * from ZVA016LAGERBEST into wa_lagerbestand where artikel = zva016VERKAUF-artikelnummer.
+
+                wa_lagerbestand-anzahl = wa_lagerbestand-anzahl + diff.
+
+                modify ZVA016LAGERBEST from wa_lagerbestand.
+
+            endselect.
+
+        ENDIF.
+
+        endselect.
+      endif.
+
+      modify zva016VERKAUF from wa_verkauf.
+
+      MESSAGE 'Datensatz werde erfolgreich geaendert!' TYPE 'S'.
+      clear wa_verkauf.
+      clear wa_lagerbestand.
+
+
+    WHEN 'CREATE'.
+
+      if zva016VERKAUF-verkaufsnummer is not initial.
+
+         wa_verkauf-kundennummer = zva016VERKAUF-kundennummer.
+         wa_verkauf-artikelnummer = zva016VERKAUF-artikelnummer.
+         wa_verkauf-menge = zva016VERKAUF-menge.
+         wa_verkauf-verkaufspreis = zva016VERKAUF-verkaufspreis.
+         wa_verkauf-waehrung = zva016VERKAUF-waehrung.
+         wa_verkauf-verkaufsdatum = zva016VERKAUF-verkaufsdatum.
+
+          INSERT zva016VERKAUF from wa_verkauf.
+
+      ENDIF.
+      MESSAGE 'Datensatz werde erfolgreich angelegt!'  TYPE 'S'.
+      clear wa_verkauf.
+
+
+    when 'SELECT'.
+      if zva016VERKAUF-verkaufsnummer is not initial.
+        select * from zva016VERKAUF into wa_verkauf where verkaufsnummer =  zva016VERKAUF-verkaufsnummer.
+
+         zva016VERKAUF-kundennummer = wa_verkauf-kundennummer.
+         zva016VERKAUF-artikelnummer = wa_verkauf-artikelnummer.
+         zva016VERKAUF-menge = wa_verkauf-menge.
+         zva016VERKAUF-verkaufspreis = wa_verkauf-verkaufspreis.
+         zva016VERKAUF-waehrung = wa_verkauf-waehrung.
+         zva016VERKAUF-verkaufsdatum = wa_verkauf-verkaufsdatum.
+
+        endselect.
+      endif.
+      MESSAGE 'Datensatz wurde erfolgreich ausgewaehlt!'  TYPE 'S'.
+
+     clear wa_verkauf.
+
+  ENDCASE.
+
+  clear wa_verkauf.
+
+
+ENDMODULE.
