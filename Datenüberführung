@@ -1,0 +1,98 @@
+*&---------------------------------------------------------------------*
+*& Report ZVA016AUFGABENBLATT4
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZVA016AUFGABENBLATT4.
+
+*Schreiben Sie ein ABAP-Programm, das die Tabelleninhalte aus den alten Tabellen in die neuen Tabellen überführt.
+*Für das Beginn-Datum der neuen Tabellen soll das Datum verwendet werden, zu dem der Kunde, der Lieferant bzw. der Artikel zum ersten Mal in Ihrem System vorkommt.
+*Neue Tabellen: ZVA016NKUNDE, ZVA016NLIEFERANT, ZVA016NARTIKEL.
+*(Beispiel: Kunde 10010 hat am 23.04.2012 zum ersten Mal bei Ihnen bestellt. Dann beginnt der Stamm- datensatz zu Kunde 10010 am 23.04.2012.). Falls noch kein
+*Datensatz vorhanden ist, soll das System-Datum als Beginn-Datum gesetzt werden. Das Ende-Datum soll immer auf „high-date“ gesetzt werden.
+
+data:   itab_OldKunde type table of zva016Kunde,
+        itab_NewKunde type table of zva016NKunde,
+        itab_OldLieferant type table of zva016Lieferant,
+        itab_NewLieferant type table of zva016NLieferant,
+        itab_OldArtikel type table of zva016Artikel,
+        itab_NewArtikel type table of zva016NArtikel,
+        itab_Verkauf type table of zva016Verkauf,
+        itab_Einkauf type table of zva016Einkauf,
+        wa_OldKunde type zva016Kunde,
+        wa_NewKunde type zva016NKunde,
+        wa_NewLieferant type zva016NLieferant,
+        wa_NewArtikel type zva016NArtikel,
+        wa_Verkauf type zva016Verkauf,
+        wa_Einkauf type zva016Einkauf.
+
+CONSTANTS: HIGH_DATE TYPE D VALUE '99991231'.
+
+*Erstens, für Zwecke des Testings, wird jede neue Tabelle gedroppt, um die Dukplikate zu vermeiden
+delete from zva016NKunde.
+delete from zva016NLieferant.
+delete from zva016NArtikel.
+
+*Jetzt fügen wir die Werte in die neue Tabellen hinzu
+insert zva016NKunde from ( select * from zva016Kunde ).
+insert zva016NLieferant from ( select * from zva016Lieferant ).
+insert zva016NArtikel from ( select * from zva016Artikel ).
+
+*Jetzt müssen die BeginDatum und EndDatum gepflegt werden.
+
+*Importieren wir die Werte in die interne Tabellen
+select * from zva016NKunde into table itab_NewKunde.
+select * from zva016NLieferant into table itab_NewLieferant.
+select * from zva016NArtikel into table itab_NewArtikel.
+
+
+loop at itab_NewKunde into wa_NewKunde.
+
+*Zuerst die EndDatum auf High-Date setzen
+    wa_NewKunde-enddatum = HIGH_DATE.
+
+    select * from zva016verkauf into table itab_Verkauf where kundennummer = wa_NewKunde-knr.
+
+    loop at itab_Verkauf into wa_Verkauf.
+
+            wa_NewKunde-begindatum = wa_Verkauf-verkaufsdatum.
+
+    endloop.
+
+    update zva016NKunde from wa_NewKunde.
+
+endloop.
+
+loop at itab_NewLieferant into wa_NewLieferant.
+
+*Zuerst die EndDatum auf High-Date setzen
+    wa_NewLieferant-enddatum = HIGH_DATE.
+
+    select * from zva016einkauf into table itab_Einkauf where lieferant = wa_NewLieferant-lnr.
+
+    loop at itab_Einkauf into wa_Einkauf.
+
+            wa_NewLieferant-begindatum = wa_Einkauf-einkaufsdatum.
+
+    endloop.
+
+    update zva016NLieferant from wa_NewLieferant.
+
+endloop.
+
+loop at itab_NewArtikel into wa_NewArtikel.
+
+*Zuerst die EndDatum auf High-Date setzen
+    wa_NewArtikel-enddatum = HIGH_DATE.
+
+    select * from zva016einkauf into table itab_Einkauf where artikel = wa_NewArtikel-anr.
+
+    loop at itab_Einkauf into wa_Einkauf.
+
+            wa_NewArtikel-begindatum = wa_Einkauf-einkaufsdatum.
+
+    endloop.
+
+    update zva016NArtikel from wa_NewArtikel.
+
+endloop.
