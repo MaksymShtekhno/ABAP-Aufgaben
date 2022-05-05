@@ -1,0 +1,70 @@
+*&---------------------------------------------------------------------*
+*& Report ZVA016AUFGABENBLATT6AUFGABE1B
+*&---------------------------------------------------------------------*
+*&
+*&---------------------------------------------------------------------*
+REPORT ZVA016AUFGABENBLATT6AUFGABE1B.
+
+* Bericht 7
+
+data:   itab_Verkauf type table of ZVA016VERKAUF,
+        wa_Verkauf type ZVA016VERKAUF,
+        wa_counter type ZVA016VERKAUF,
+        gewinnProArtikel type p,
+        verkaufsmonat type i,
+        berichtsjahr type n length 4,
+        anzahlAnkaeufe type i value 0,
+        umsatz type p value 0,
+        durchUmsatz type p,
+        monate type i value 1.
+
+Select-options jahr for wa_Verkauf-verkaufsdatum.
+
+select * from zva016Verkauf into table itab_Verkauf.
+
+berichtsjahr = jahr.
+
+write: / 'Bericht Nummer 7 - Durchschnittlicher Umsatz pro Monat'.
+
+write: / 'Gewählte Selektionen: ',
+       / 'Jahr: ', berichtsjahr.
+
+uline.
+
+while monate < 13.
+
+select * from ZVA016VERKAUF into wa_Verkauf.
+
+    if wa_Verkauf-verkaufsdatum in jahr.
+
+        verkaufsmonat = wa_Verkauf-verkaufsdatum+4(2).
+
+          if monate = verkaufsmonat.
+
+              anzahlAnkaeufe = anzahlAnkaeufe + 1.
+              umsatz = umsatz + wa_verkauf-verkaufspreis.
+
+          endif.
+
+    endif.
+
+endselect.
+
+durchUmsatz = umsatz / anzahlAnkaeufe.
+
+write: / monate,
+         anzahlAnkaeufe,
+         umsatz,
+         durchUmsatz.
+
+
+anzahlAnkaeufe = 0.
+umsatz = 0.
+durchUmsatz = 0.
+monate = monate + 1.
+
+endwhile.
+
+uline.
+write: /'Reportstart: ', sy-datum, sy-uzeit left-justified,
+       'Nutzer: ', sy-uname right-justified.
